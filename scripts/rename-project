@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+
+include FileUtils
+cd File.dirname(File.dirname(__FILE__))
+
+if (!ARGV[0] and not ARGV[2]) || ['-h', '--help'].include?(ARGV[0])
+  puts"Renames given project with given name"
+  puts
+  puts "Usage: #{__FILE__} [category/]project-name new-project-name"
+  puts
+  exit 0
+end
+
+def gsub_in_file!(filename, search, replacement)
+  text = File.read(filename)
+  text.gsub!(search, replacement)
+  File.open(filename, 'wb') {|f| f.write(text) }
+end
+
+
+src_path = ARGV[0]
+
+src_category = src_path.split('/').reverse.drop(1).reverse.join('/')
+src_name = src_path.split('/').last
+
+dest_name = ARGV[1]
+
+
+
+template_name = src_name
+template_path = "private/#{template_name}"
+
+puts "Renaming folder #{src_name} to #{dest_name}"
+
+FileUtils.mv("#{src_path}/", "#{src_category}/#{dest_name}" )
+
+puts "Replacing occurrences of #{template_name} with #{dest_name}"
+
+files_with_project_name = [
+  'nbproject/project.properties',
+  'nbproject/build-impl.xml',
+  'nbproject/project.xml',
+  'build.xml'
+]
+for file in files_with_project_name
+  puts "  in #{src_category}/#{dest_name}/#{file}"
+  gsub_in_file!("#{src_category}/#{dest_name}/#{file}", template_name, dest_name)
+end
+
+puts
+puts "Remember to fix points!"
+puts
+puts "Done!"
+puts
